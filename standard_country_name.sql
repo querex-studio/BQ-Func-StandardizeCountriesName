@@ -1,0 +1,489 @@
+-- =============================================================================
+-- BigQuery Country Name Standardization UDF
+-- =============================================================================
+-- 
+-- Standardizes country names and codes to ISO 3166-1 standard names.
+-- 
+-- Usage:
+--   SELECT `your_project.your_dataset.standard_country_name`('USA');
+--   -- Returns: United States
+--
+-- Replace `your_project.your_dataset` with your actual project and dataset.
+-- =============================================================================
+
+CREATE OR REPLACE FUNCTION `your_project.your_dataset.standard_country_name`(country_input STRING) 
+RETURNS STRING AS (
+  (
+    WITH
+      -- =======================================================================
+      -- Step 1: Normalize the input
+      -- Remove accents, lowercase, strip non-alphanumeric characters
+      -- =======================================================================
+      norm AS (
+        SELECT
+          LOWER(
+            REGEXP_REPLACE(
+              REGEXP_REPLACE(
+                REGEXP_REPLACE(
+                  REGEXP_REPLACE(
+                    REGEXP_REPLACE(
+                      NORMALIZE(LOWER(TRIM(COALESCE(country_input, ""))), NFD), 
+                      r"\pM", ""
+                    ),
+                    r"&", "and"
+                  ),
+                  r"'", ""
+                ),
+                r"[^a-z0-9]+", ""
+              ),
+              r"\s+", ""
+            )
+          ) AS key
+      ),
+      
+      -- =======================================================================
+      -- Step 2: ISO 3166-1 Standard Countries
+      -- =======================================================================
+      standard AS (
+        SELECT * FROM UNNEST([
+          STRUCT("Afghanistan" AS name, "AF" AS code),
+          ("Albania", "AL"),
+          ("Algeria", "DZ"),
+          ("American Samoa", "AS"),
+          ("Andorra", "AD"),
+          ("Angola", "AO"),
+          ("Anguilla", "AI"),
+          ("Antarctica", "AQ"),
+          ("Antigua and Barbuda", "AG"),
+          ("Argentina", "AR"),
+          ("Armenia", "AM"),
+          ("Aruba", "AW"),
+          ("Australia", "AU"),
+          ("Austria", "AT"),
+          ("Azerbaijan", "AZ"),
+          ("Bahamas", "BS"),
+          ("Bahrain", "BH"),
+          ("Bangladesh", "BD"),
+          ("Barbados", "BB"),
+          ("Belarus", "BY"),
+          ("Belgium", "BE"),
+          ("Belize", "BZ"),
+          ("Benin", "BJ"),
+          ("Bermuda", "BM"),
+          ("Bhutan", "BT"),
+          ("Bolivia, Plurinational State of", "BO"),
+          ("Bonaire, Sint Eustatius and Saba", "BQ"),
+          ("Bosnia and Herzegovina", "BA"),
+          ("Botswana", "BW"),
+          ("Bouvet Island", "BV"),
+          ("Brazil", "BR"),
+          ("British Indian Ocean Territory", "IO"),
+          ("Brunei Darussalam", "BN"),
+          ("Bulgaria", "BG"),
+          ("Burkina Faso", "BF"),
+          ("Burundi", "BI"),
+          ("Cambodia", "KH"),
+          ("Cameroon", "CM"),
+          ("Canada", "CA"),
+          ("Cape Verde", "CV"),
+          ("Cayman Islands", "KY"),
+          ("Central African Republic", "CF"),
+          ("Chad", "TD"),
+          ("Chile", "CL"),
+          ("China", "CN"),
+          ("Christmas Island", "CX"),
+          ("Cocos (Keeling) Islands", "CC"),
+          ("Colombia", "CO"),
+          ("Comoros", "KM"),
+          ("Congo", "CG"),
+          ("Congo, the Democratic Republic of the", "CD"),
+          ("Cook Islands", "CK"),
+          ("Costa Rica", "CR"),
+          ("Croatia", "HR"),
+          ("Cuba", "CU"),
+          ("Curaçao", "CW"),
+          ("Cyprus", "CY"),
+          ("Czech Republic", "CZ"),
+          ("Côte d'Ivoire", "CI"),
+          ("Denmark", "DK"),
+          ("Djibouti", "DJ"),
+          ("Dominica", "DM"),
+          ("Dominican Republic", "DO"),
+          ("Ecuador", "EC"),
+          ("Egypt", "EG"),
+          ("El Salvador", "SV"),
+          ("Equatorial Guinea", "GQ"),
+          ("Eritrea", "ER"),
+          ("Estonia", "EE"),
+          ("Eswatini", "SZ"),
+          ("Ethiopia", "ET"),
+          ("Falkland Islands (Malvinas)", "FK"),
+          ("Faroe Islands", "FO"),
+          ("Fiji", "FJ"),
+          ("Finland", "FI"),
+          ("France", "FR"),
+          ("French Guiana", "GF"),
+          ("French Polynesia", "PF"),
+          ("French Southern Territories", "TF"),
+          ("Gabon", "GA"),
+          ("Gambia", "GM"),
+          ("Georgia", "GE"),
+          ("Germany", "DE"),
+          ("Ghana", "GH"),
+          ("Gibraltar", "GI"),
+          ("Greece", "GR"),
+          ("Greenland", "GL"),
+          ("Grenada", "GD"),
+          ("Guadeloupe", "GP"),
+          ("Guam", "GU"),
+          ("Guatemala", "GT"),
+          ("Guernsey", "GG"),
+          ("Guinea", "GN"),
+          ("Guinea-Bissau", "GW"),
+          ("Guyana", "GY"),
+          ("Haiti", "HT"),
+          ("Heard Island and McDonald Islands", "HM"),
+          ("Holy See (Vatican City State)", "VA"),
+          ("Honduras", "HN"),
+          ("Hong Kong", "HK"),
+          ("Hungary", "HU"),
+          ("Iceland", "IS"),
+          ("India", "IN"),
+          ("Indonesia", "ID"),
+          ("Iran, Islamic Republic of", "IR"),
+          ("Iraq", "IQ"),
+          ("Ireland", "IE"),
+          ("Isle of Man", "IM"),
+          ("Israel", "IL"),
+          ("Italy", "IT"),
+          ("Jamaica", "JM"),
+          ("Japan", "JP"),
+          ("Jersey", "JE"),
+          ("Jordan", "JO"),
+          ("Kazakhstan", "KZ"),
+          ("Kenya", "KE"),
+          ("Kiribati", "KI"),
+          ("Korea, Democratic People's Republic of", "KP"),
+          ("Korea, Republic of", "KR"),
+          ("Kuwait", "KW"),
+          ("Kyrgyzstan", "KG"),
+          ("Lao People's Democratic Republic", "LA"),
+          ("Latvia", "LV"),
+          ("Lebanon", "LB"),
+          ("Lesotho", "LS"),
+          ("Liberia", "LR"),
+          ("Libya", "LY"),
+          ("Liechtenstein", "LI"),
+          ("Lithuania", "LT"),
+          ("Luxembourg", "LU"),
+          ("Macao", "MO"),
+          ("Macedonia, the Former Yugoslav Republic of", "MK"),
+          ("Madagascar", "MG"),
+          ("Malawi", "MW"),
+          ("Malaysia", "MY"),
+          ("Maldives", "MV"),
+          ("Mali", "ML"),
+          ("Malta", "MT"),
+          ("Marshall Islands", "MH"),
+          ("Martinique", "MQ"),
+          ("Mauritania", "MR"),
+          ("Mauritius", "MU"),
+          ("Mayotte", "YT"),
+          ("Mexico", "MX"),
+          ("Micronesia, Federated States of", "FM"),
+          ("Moldova, Republic of", "MD"),
+          ("Monaco", "MC"),
+          ("Mongolia", "MN"),
+          ("Montenegro", "ME"),
+          ("Montserrat", "MS"),
+          ("Morocco", "MA"),
+          ("Mozambique", "MZ"),
+          ("Myanmar", "MM"),
+          ("Namibia", "NA"),
+          ("Nauru", "NR"),
+          ("Nepal", "NP"),
+          ("Netherlands", "NL"),
+          ("New Caledonia", "NC"),
+          ("New Zealand", "NZ"),
+          ("Nicaragua", "NI"),
+          ("Niger", "NE"),
+          ("Nigeria", "NG"),
+          ("Niue", "NU"),
+          ("Norfolk Island", "NF"),
+          ("Northern Mariana Islands", "MP"),
+          ("Norway", "NO"),
+          ("Oman", "OM"),
+          ("Pakistan", "PK"),
+          ("Palau", "PW"),
+          ("Palestine, State of", "PS"),
+          ("Panama", "PA"),
+          ("Papua New Guinea", "PG"),
+          ("Paraguay", "PY"),
+          ("Peru", "PE"),
+          ("Philippines", "PH"),
+          ("Pitcairn", "PN"),
+          ("Poland", "PL"),
+          ("Portugal", "PT"),
+          ("Puerto Rico", "PR"),
+          ("Qatar", "QA"),
+          ("Romania", "RO"),
+          ("Russian Federation", "RU"),
+          ("Rwanda", "RW"),
+          ("Réunion", "RE"),
+          ("Saint Barthélemy", "BL"),
+          ("Saint Helena, Ascension and Tristan da Cunha", "SH"),
+          ("Saint Kitts and Nevis", "KN"),
+          ("Saint Lucia", "LC"),
+          ("Saint Martin (French part)", "MF"),
+          ("Saint Pierre and Miquelon", "PM"),
+          ("Saint Vincent and the Grenadines", "VC"),
+          ("Samoa", "WS"),
+          ("San Marino", "SM"),
+          ("Sao Tome and Principe", "ST"),
+          ("Saudi Arabia", "SA"),
+          ("Senegal", "SN"),
+          ("Serbia", "RS"),
+          ("Seychelles", "SC"),
+          ("Sierra Leone", "SL"),
+          ("Singapore", "SG"),
+          ("Sint Maarten (Dutch part)", "SX"),
+          ("Slovakia", "SK"),
+          ("Slovenia", "SI"),
+          ("Solomon Islands", "SB"),
+          ("Somalia", "SO"),
+          ("South Africa", "ZA"),
+          ("South Georgia and the South Sandwich Islands", "GS"),
+          ("South Sudan", "SS"),
+          ("Spain", "ES"),
+          ("Sri Lanka", "LK"),
+          ("Sudan", "SD"),
+          ("Suriname", "SR"),
+          ("Svalbard and Jan Mayen", "SJ"),
+          ("Sweden", "SE"),
+          ("Switzerland", "CH"),
+          ("Syrian Arab Republic", "SY"),
+          ("Taiwan, Province of China", "TW"),
+          ("Tajikistan", "TJ"),
+          ("Tanzania, United Republic of", "TZ"),
+          ("Thailand", "TH"),
+          ("Timor-Leste", "TL"),
+          ("Togo", "TG"),
+          ("Tokelau", "TK"),
+          ("Tonga", "TO"),
+          ("Trinidad and Tobago", "TT"),
+          ("Tunisia", "TN"),
+          ("Turkey", "TR"),
+          ("Turkmenistan", "TM"),
+          ("Turks and Caicos Islands", "TC"),
+          ("Tuvalu", "TV"),
+          ("Uganda", "UG"),
+          ("Ukraine", "UA"),
+          ("United Arab Emirates", "AE"),
+          ("United Kingdom", "GB"),
+          ("United States", "US"),
+          ("United States Minor Outlying Islands", "UM"),
+          ("Uruguay", "UY"),
+          ("Uzbekistan", "UZ"),
+          ("Vanuatu", "VU"),
+          ("Venezuela, Bolivarian Republic of", "VE"),
+          ("Viet Nam", "VN"),
+          ("Virgin Islands, British", "VG"),
+          ("Virgin Islands, U.S.", "VI"),
+          ("Wallis and Futuna", "WF"),
+          ("Western Sahara", "EH"),
+          ("Yemen", "YE"),
+          ("Zambia", "ZM"),
+          ("Zimbabwe", "ZW"),
+          ("Åland Islands", "AX")
+        ])
+      ),
+
+      -- =======================================================================
+      -- Step 3: Common Aliases and Alternative Names
+      -- =======================================================================
+      aliases AS (
+        SELECT * FROM UNNEST([
+          -- United States
+          STRUCT("USA" AS alias, "United States" AS name),
+          ("U.S.A.", "United States"),
+          ("U.S.", "United States"),
+          ("US", "United States"),
+          ("United States of America", "United States"),
+          ("America", "United States"),
+          
+          -- United Kingdom
+          ("UK", "United Kingdom"),
+          ("U.K.", "United Kingdom"),
+          ("Great Britain", "United Kingdom"),
+          ("Britain", "United Kingdom"),
+          ("GB", "United Kingdom"),
+          ("G.B.", "United Kingdom"),
+          ("England", "United Kingdom"),
+          
+          -- Russia
+          ("Russia", "Russian Federation"),
+          ("Rusia", "Russian Federation"),
+          
+          -- Korea
+          ("South Korea", "Korea, Republic of"),
+          ("Korea", "Korea, Republic of"),
+          ("Republic of Korea", "Korea, Republic of"),
+          ("ROK", "Korea, Republic of"),
+          ("North Korea", "Korea, Democratic People's Republic of"),
+          ("DPRK", "Korea, Democratic People's Republic of"),
+          
+          -- Middle East
+          ("Iran", "Iran, Islamic Republic of"),
+          ("Persia", "Iran, Islamic Republic of"),
+          ("Syria", "Syrian Arab Republic"),
+          ("UAE", "United Arab Emirates"),
+          ("U.A.E.", "United Arab Emirates"),
+          ("Emirates", "United Arab Emirates"),
+          ("Palestine", "Palestine, State of"),
+          
+          -- Asia
+          ("Vietnam", "Viet Nam"),
+          ("Taiwan", "Taiwan, Province of China"),
+          ("Republic of China", "Taiwan, Province of China"),
+          ("ROC", "Taiwan, Province of China"),
+          ("Laos", "Lao People's Democratic Republic"),
+          ("Brunei", "Brunei Darussalam"),
+          ("Macau", "Macao"),
+          ("Burma", "Myanmar"),
+          ("East Timor", "Timor-Leste"),
+          
+          -- South America
+          ("Bolivia", "Bolivia, Plurinational State of"),
+          ("Venezuela", "Venezuela, Bolivarian Republic of"),
+          
+          -- Africa
+          ("Ivory Coast", "Côte d'Ivoire"),
+          ("Cote dIvoire", "Côte d'Ivoire"),
+          ("Cote d Ivoire", "Côte d'Ivoire"),
+          ("Democratic Republic of the Congo", "Congo, the Democratic Republic of the"),
+          ("DRC", "Congo, the Democratic Republic of the"),
+          ("DR Congo", "Congo, the Democratic Republic of the"),
+          ("Congo-Kinshasa", "Congo, the Democratic Republic of the"),
+          ("Zaire", "Congo, the Democratic Republic of the"),
+          ("Republic of the Congo", "Congo"),
+          ("Congo-Brazzaville", "Congo"),
+          ("Swaziland", "Eswatini"),
+          
+          -- Europe
+          ("Holland", "Netherlands"),
+          ("The Netherlands", "Netherlands"),
+          ("Czech", "Czech Republic"),
+          ("Czechia", "Czech Republic"),
+          ("Moldova", "Moldova, Republic of"),
+          ("Macedonia", "Macedonia, the Former Yugoslav Republic of"),
+          ("North Macedonia", "Macedonia, the Former Yugoslav Republic of"),
+          ("FYROM", "Macedonia, the Former Yugoslav Republic of"),
+          ("Vatican", "Holy See (Vatican City State)"),
+          ("Vatican City", "Holy See (Vatican City State)"),
+          ("Türkiye", "Turkey"),
+          ("Turkiye", "Turkey"),
+          
+          -- Other
+          ("Tanzania", "Tanzania, United Republic of"),
+          ("Micronesia", "Micronesia, Federated States of"),
+          ("Kyrgyz Republic", "Kyrgyzstan"),
+          
+          -- Islands and Territories
+          ("Falkland Islands", "Falkland Islands (Malvinas)"),
+          ("Falklands", "Falkland Islands (Malvinas)"),
+          ("Cocos Islands", "Cocos (Keeling) Islands"),
+          ("Keeling Islands", "Cocos (Keeling) Islands"),
+          ("British Virgin Islands", "Virgin Islands, British"),
+          ("BVI", "Virgin Islands, British"),
+          ("US Virgin Islands", "Virgin Islands, U.S."),
+          ("USVI", "Virgin Islands, U.S."),
+          ("Cape Verde Islands", "Cape Verde"),
+          ("Cabo Verde", "Cape Verde"),
+          
+          -- Saint variations
+          ("Saint Helena", "Saint Helena, Ascension and Tristan da Cunha"),
+          ("St Helena", "Saint Helena, Ascension and Tristan da Cunha"),
+          ("St. Helena", "Saint Helena, Ascension and Tristan da Cunha"),
+          ("Saint Kitts", "Saint Kitts and Nevis"),
+          ("St Kitts", "Saint Kitts and Nevis"),
+          ("St. Kitts", "Saint Kitts and Nevis"),
+          ("St Kitts and Nevis", "Saint Kitts and Nevis"),
+          ("St. Kitts and Nevis", "Saint Kitts and Nevis"),
+          ("St Lucia", "Saint Lucia"),
+          ("St. Lucia", "Saint Lucia"),
+          ("Saint Vincent", "Saint Vincent and the Grenadines"),
+          ("St Vincent", "Saint Vincent and the Grenadines"),
+          ("St. Vincent", "Saint Vincent and the Grenadines"),
+          ("Saint Martin", "Saint Martin (French part)"),
+          ("St Martin", "Saint Martin (French part)"),
+          ("St. Martin", "Saint Martin (French part)"),
+          ("Saint Pierre", "Saint Pierre and Miquelon"),
+          ("St Pierre", "Saint Pierre and Miquelon"),
+          ("St. Pierre", "Saint Pierre and Miquelon"),
+          ("Saint Barthelemy", "Saint Barthélemy"),
+          ("St Barthelemy", "Saint Barthélemy"),
+          ("St. Barthelemy", "Saint Barthélemy"),
+          ("St Barts", "Saint Barthélemy"),
+          ("St. Barts", "Saint Barthélemy"),
+          
+          -- Accented name variations
+          ("Reunion", "Réunion"),
+          ("Aland Islands", "Åland Islands"),
+          ("Aland", "Åland Islands"),
+          ("Curacao", "Curaçao"),
+          
+          -- Composite country shortcuts
+          ("Sao Tome", "Sao Tome and Principe"),
+          ("São Tomé and Príncipe", "Sao Tome and Principe"),
+          ("São Tomé", "Sao Tome and Principe"),
+          ("Trinidad", "Trinidad and Tobago"),
+          ("Antigua", "Antigua and Barbuda"),
+          ("Bosnia", "Bosnia and Herzegovina"),
+          ("PNG", "Papua New Guinea"),
+          ("New Guinea", "Papua New Guinea"),
+          
+          -- Other common alternatives
+          ("Slovak Republic", "Slovakia"),
+          ("RSA", "South Africa"),
+          ("KSA", "Saudi Arabia"),
+          ("PRC", "China"),
+          ("Peoples Republic of China", "China"),
+          ("People's Republic of China", "China")
+        ])
+      ),
+
+      -- =======================================================================
+      -- Step 4: Normalize alias keys for matching
+      -- =======================================================================
+      alias_norm AS (
+        SELECT
+          name,
+          LOWER(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(
+            NORMALIZE(LOWER(TRIM(alias)), NFD), r"\pM", ""), r"&", "and"), r"'", ""), r"[^a-z0-9]+", "")) AS k
+        FROM aliases
+      ),
+
+      -- =======================================================================
+      -- Step 5: Normalize standard country names and codes
+      -- =======================================================================
+      std_norm AS (
+        SELECT
+          name,
+          code,
+          LOWER(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(
+            NORMALIZE(LOWER(TRIM(name)), NFD), r"\pM", ""), r"&", "and"), r"'", ""), r"[^a-z0-9]+", "")) AS k_name,
+          LOWER(REGEXP_REPLACE(LOWER(TRIM(code)), r"[^a-z0-9]+", "")) AS k_code
+        FROM standard
+      )
+
+    -- =======================================================================
+    -- Step 6: Match input against aliases first, then standard names/codes
+    -- Returns NULL if no match found
+    -- =======================================================================
+    SELECT
+      COALESCE(
+        (SELECT a.name FROM alias_norm a, norm n WHERE a.k = n.key LIMIT 1),
+        (SELECT s.name FROM std_norm s, norm n WHERE s.k_name = n.key OR s.k_code = n.key LIMIT 1)
+      )
+  )
+);
